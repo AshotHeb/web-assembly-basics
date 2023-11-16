@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CCall and CWrap</title>
+  </head>
+  <body>
+    <script>
+      function run_wasm() {
+        /* such as js call function */
+        const result = Module.ccall("main", "number", null, null);
+        console.log("🚀 ~addNumssss ccall:", result);
+
+        /* such as js call function with arguments*/
+        const a = document.querySelector("#a").value;
+        const b = document.querySelector("#b").value;
+
+        const result2 = Module.ccall(
+          "addNums",
+          "number",
+          ["number", "number"],
+          [a, b]
+        );
+        console.log("🚀 ~addNumssss ccall with arguments:", result2);
+
+        /* such as js bind function*/
+        const addNumssss = Module.cwrap("addNums", "number", [
+          "number",
+          "number",
+        ]);
+
+        const result3 = addNumssss(a, b);
+        console.log("🚀 ~ addNumssss", result3);
+
+        const subtractNums = Module.cwrap("subtractNums", "number", [
+          "number",
+          "number",
+        ]);
+
+        const result4 = subtractNums(a, b);
+        console.log("🚀 ~ subtractNums:", result4);
+      }
+    </script>
+    <input type="number" id="a" />
+    <input type="number" id="b" />
+
+    <button onclick="run_wasm()">Trigger</button>
+
+    <script src="./wrapping.js"></script>
+  </body>
+</html>

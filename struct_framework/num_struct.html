@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Num Structures</title>
+  </head>
+  <body>
+    <script src="struck_framework.js"></script>
+    <script>
+      registerStruct("struct", {
+        a: "int",
+        b: "int",
+      });
+
+      let memory = new WebAssembly.Memory({
+        initial: 256,
+        maximum: 512,
+      });
+
+      var exports;
+      WebAssembly.instantiateStreaming(fetch("num_struct.wasm"), {
+        js: {
+          mem: memory,
+        },
+        env: {
+          emscripten_resize_heap: memory.grow,
+        },
+      }).then((results) => {
+        exports = results.instance.exports;
+        memory = results.instance.exports.memory;
+      });
+
+      function run_wasm() {
+        const a = document.getElementById("a").value;
+        const b = document.getElementById("b").value;
+        const c = document.getElementById("c").value;
+
+        const ptr = exports.wasmmalloc(12);
+        let buf = new Uint32Array(memory.buffer, ptr);
+
+        buf[0] = a; //int
+        buf[1] = b; //int
+
+        buf = new Float32Array(memory.buffer, ptr, 3);
+
+        buf[2] = c; //float
+
+        const sum = exports.computeSum(ptr);
+        console.log("🚀 ~ sum:", sum);
+
+        exports.wasmfree(ptr);
+      }
+    </script>
+
+    <input type="number" id="a" />
+    <input type="number" id="b" />
+    <input type="number" id="c" />
+
+    <button onclick="run_wasm()">Compute Sum</button>
+
+    <button onclick="copy_text()">Copy Text</button>
+  </body>
+</html>

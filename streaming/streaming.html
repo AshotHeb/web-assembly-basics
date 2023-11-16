@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Streaming</title>
+  </head>
+  <body>
+    <script>
+      /* Exmaple 1 */
+
+      //   function run_wasm() {
+      //     WebAssembly.instantiateStreaming(fetch("streaming.wasm"), {}).then(
+      //       (results) => {
+      //         const a = document.querySelector("#a").value;
+      //         const sum = results.instance.exports.sumOfNInts(a);
+      //         console.log(sum);
+      //       }
+      //     );
+      //   }
+
+      /* Exmaple 2 */
+
+      var exports;
+      WebAssembly.instantiateStreaming(fetch("streaming.wasm"), {}).then(
+        (results) => {
+          exports = results.instance.exports;
+        }
+      );
+
+      function run_wasm() {
+        WebAssembly.instantiateStreaming(fetch("streaming.wasm"), {}).then(
+          (results) => {
+            const a = document.querySelector("#a").value;
+            const sum = exports.sumOfNInts(a);
+            console.log(sum);
+          }
+        );
+      }
+    </script>
+
+    <input type="number" id="a" />
+
+    <button onclick="run_wasm()">Trigger</button>
+  </body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Malloc</title>
+  </head>
+  <body>
+    <script>
+      let memory = new WebAssembly.Memory({
+        initial: 256,
+        maximum: 512,
+      });
+
+      var exports;
+      WebAssembly.instantiateStreaming(fetch("malloc.wasm"), {
+        js: {
+          mem: memory,
+        },
+        env: {
+          emscripten_resize_heap: function (delta) {
+            memory.grow(delta);
+          },
+        },
+      }).then((results) => {
+        exports = results.instance.exports;
+        memory = results.instance.exports.memory;
+      });
+
+      function run_wasm() {
+        const arr = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
+        var ptr = encodeArray(arr, 10, 4);
+        let sum = exports.accumulate(ptr, 10);
+
+        console.log("sum", sum);
+
+        exports.wasmfree(ptr);
+      }
+
+      function copy_text() {
+        const str = decodeString(exports.getString());
+
+        console.log("🚀 ~ str:", str);
+        navigator.clipboard.writeText(str);
+      }
+
+      function encodeArray(arr, len, sizeof = 1) {
+        var ptr;
+        var out;
+
+        if (sizeof == 8) {
+          ptr = exports.wasmmalloc(len * 8);
+          out = new BigUint64Array(memory.buffer, ptr);
+        } else if (sizeof == 4) {
+          ptr = exports.wasmmalloc(len * 4);
+          out = new Uint32Array(memory.buffer, ptr);
+        } else {
+          ptr = exports.wasmmalloc(len);
+          out = new Uint8Array(memory.buffer, ptr);
+        }
+
+        for (var i = 0; i < len; i++) {
+          out[i] = arr[i];
+        }
+
+        return ptr;
+      }
+
+      function decodeArrray(ptr, len) {
+        return new Uint8Array(memory.buffer).slice(ptr, ptr + len);
+      }
+
+      function decodeString(ptr, len) {
+        return new TextDecoder("utf-8").decode(decodeArrray(ptr, len));
+      }
+
+      function decodeString(ptr) {
+        var bytes = new Uint8Array(memory.buffer, ptr);
+        var strlen = 0;
+
+        while (bytes[strlen] !== 0) {
+          strlen++;
+        }
+
+        return new TextDecoder("utf8").decode(bytes.slice(0, strlen));
+      }
+    </script>
+
+    <input type="number" id="a" />
+    <input type="number" id="b" />
+
+    <button onclick="run_wasm()">Trigger</button>
+
+    <button onclick="copy_text()">Copy Text</button>
+  </body>
+</html>
