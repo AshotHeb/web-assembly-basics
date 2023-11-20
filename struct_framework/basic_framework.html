@@ -9,10 +9,18 @@
   <body>
     <script src="struck_framework.js"></script>
     <script>
-      registerStruct("struct", {
-        a: "int",
-        b: "int",
+      registerStruct("sub", {
+        c: "int",
+        d: "int",
       });
+
+      registerStruct("struct", {
+        c: "int",
+        d: "int",
+        s: "sub",
+      });
+
+      console.log(types);
 
       let memory = new WebAssembly.Memory({
         initial: 256,
@@ -20,7 +28,7 @@
       });
 
       var exports;
-      WebAssembly.instantiateStreaming(fetch("num_struct.wasm"), {
+      WebAssembly.instantiateStreaming(fetch("nested_struct.wasm"), {
         js: {
           mem: memory,
         },
@@ -37,27 +45,29 @@
         const b = document.getElementById("b").value;
         const c = document.getElementById("c").value;
 
-        /* Encoding of Struct */
-
-        // var ptr = startEncodeStruct(
-        //   "struct",
-        //   {
-        //     a,
-        //     b,
-        //   },
-        //   memory,
-        //   exports.wasmmalloc
-        // );
-
-        // const sum = exports.computeSum(ptr);
-        // exports.wasmfree(ptr);
-
-        /* Decodeing of Struct */
-        const ptr = exports.createPair(a, b);
+        /* Decodeing of Nested Struct */
+        var ptr = exports.createStruct(a, b, 56, 12);
         const obj = startDecodeStruct("struct", ptr, memory);
-        console.log("obj", obj);
-        sum = exports.computeSum(ptr);
-        console.log("sun", sum);
+        console.log("🚀 ~ obj:", obj);
+
+        ptr = startEncodeStruct(
+          "struct",
+          {
+            a: a,
+            b: b,
+            s: {
+              c: 5,
+              d: 5,
+            },
+          },
+          memory,
+          exports.wasmmalloc
+        );
+
+        var sum = exports.computeSum2(ptr);
+        console.log(a * b + 5 / 5);
+        console.log("Sum", sum);
+
         exports.wasmfree(ptr);
       }
     </script>

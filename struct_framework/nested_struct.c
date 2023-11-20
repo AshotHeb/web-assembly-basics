@@ -2,15 +2,17 @@
 #include <stdlib.h>
 
 typedef struct {
+    int val;
     int a;
-    int b;
-    float c;
-} pair;
+} sub_s;
 
 typedef struct {
-    long long val;
-    char a;
-} sub_s;
+    int a;
+    int b;
+    sub_s structure;
+} s;
+
+
 
 int main (){
     return 0;
@@ -20,8 +22,8 @@ EMSCRIPTEN_KEEPALIVE
 int function(int a ,double d , float f);
 
 EMSCRIPTEN_KEEPALIVE
-float computeSum(pair *p) {
-    return (float)(p->a + p->b) + p->c;
+float computeSum(s *p) {
+    return p->a + p->b ;
 }
 
 
@@ -36,10 +38,29 @@ void wasmfree (void *ptr) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-pair *createPair(int a ,int b) {
-    pair *p = malloc(sizeof(pair));
+s *createPair(int a ,int b) {
+    s *p = malloc(sizeof(s));
     p->a = a;
     p->b = b;
 
     return p;
+}
+
+
+
+EMSCRIPTEN_KEEPALIVE
+s *createStruct (int a ,int b ,int l,int c) {
+    /*malloc ը ավտոմատ տարածք ա հատկացնում հիշողության մեջ */
+    s *p = malloc(sizeof(s));
+    p->a = a;
+    p->b = b;
+    p->structure.val = l;
+    p->structure.a = c;
+
+    return p;
+} 
+
+EMSCRIPTEN_KEEPALIVE
+int computeSum2(s *obj) {
+    return obj->a * obj->b + obj->structure.val / obj->structure.a;
 }

@@ -7,6 +7,8 @@ let types = {
   long: 8,
 };
 
+let primitives = ["char", "short", "int", "float", "double", "long"];
+
 let structs = {};
 
 function registerStruct(name, structFormat) {
@@ -31,12 +33,16 @@ function encodeNumber(num, n, buffer, offset = 0) {
   }
 }
 
-function encodeStruct(name, obj, buffer) {
-  let cursor = 0;
+function encodeStruct(name, obj, buffer, offset = 0) {
+  let cursor = offset;
 
   for (const [key, type] of Object.entries(structs[name])) {
-    //ecnode the number
-    encodeNumber(obj[key] ?? 0, types[type], buffer, cursor);
+    if (primitives.includes(type)) {
+      encodeNumber(obj[key] ?? 0, types[type], buffer, cursor);
+    } else {
+      encodeStruct(type, obj[key] ?? {}, buffer, cursor);
+    }
+
     cursor += types[type];
   }
 }
@@ -63,12 +69,17 @@ const decodeNumber = (n, memory, offset = 0) => {
   return ret;
 };
 
-const decodeStruct = (name, memory) => {
+const decodeStruct = (name, memory, offset = 0) => {
   const ret = {};
-  let cursor = 0;
+  let cursor = offset;
 
   for (const [key, type] of Object.entries(structs[name])) {
-    ret[key] = decodeNumber(types[type], memory, cursor);
+    if (primitives.includes(type)) {
+      ret[key] = decodeNumber(types[type], memory, cursor);
+    } else {
+      ret[key] = decodeStruct(type, memory, cursor);
+    }
+
     cursor += types[type];
   }
   return ret;
