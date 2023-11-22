@@ -44,31 +44,27 @@
         const a = document.getElementById("a").value;
         const b = document.getElementById("b").value;
         const c = document.getElementById("c").value;
+      }
 
-        /* Decodeing of Nested Struct */
-        var ptr = exports.createStruct(a, b, 56, 12);
-        const obj = startDecodeStruct("struct", ptr, memory);
-        console.log("🚀 ~ obj:", obj);
+      function encode() {
+        const a = document.querySelector("#a").value;
+        const b = document.querySelector("#b").value;
 
-        ptr = startEncodeStruct(
+        var ptr = encodePointer(
           "struct",
           {
             a: a,
             b: b,
             s: {
-              c: 5,
-              d: 5,
+              c: 413498123,
+              d: 1056,
             },
           },
           memory,
           exports.wasmmalloc
         );
-
-        var sum = exports.computeSum2(ptr);
-        console.log(a * b + 5 / 5);
-        console.log("Sum", sum);
-
-        exports.wasmfree(ptr);
+        console.log("ptr", ptr);
+        var sum = exports.computeSum(ptr);
       }
     </script>
 

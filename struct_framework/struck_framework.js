@@ -1,13 +1,10 @@
 let types = {
-  char: 1,
-  short: 2,
+  char: 4,
   int: 4,
   float: 4,
-  double: 8,
-  long: 8,
 };
 
-let primitives = ["char", "short", "int", "float", "double", "long"];
+let primitives = ["char", "int", "float"];
 
 let structs = {};
 
@@ -88,3 +85,60 @@ const decodeStruct = (name, memory, offset = 0) => {
 const startDecodeStruct = (name, ptr, memory) => {
   return decodeStruct(name, new Uint8Array(memory.buffer, ptr, types[name]));
 };
+
+/*  new functions */
+
+function encodeInt(num, n, buffer, offset = 0) {
+  for (let i = 0; i < n; i++) {
+    buffer[i + offset] = num & 0xff;
+    num >>= 8;
+  }
+}
+
+function encodeElem(
+  type,
+  obj,
+  buffer,
+  memory,
+  malloc,
+  cursor = 0,
+  pointer = 0
+) {
+  if (primitives.includes(type)) {
+    if (type !== "float") {
+      encodeInt(obj ?? 0, types[type], buffer, cursor);
+    } else {
+      const floatBuf = new Float32Array(memory.buffer, pointer + cursor);
+      floatBuf[0] = obj ?? 0.0;
+    }
+  } else {
+    encodeStruct(type, obj, buffer, memory, malloc, cursor, pointer);
+  }
+}
+
+function encodeStruct(
+  type,
+  obj,
+  buffer,
+  memory,
+  malloc,
+  cursor = 0,
+  pointer = 0
+) {
+  for (const [name, elemType] of Object.entries(structs[type])) {
+    encodeElem(elemType, obj[name], buffer, memory, malloc, cursor, pointer);
+
+    cursor += types[elemType];
+  }
+}
+
+function encodePointer(type, obj, memory, malloc) {
+  if (!obj) return; //NULL
+
+  const ptr = malloc(types[type]);
+  const buf = new Uint8Array(memory.buffer, ptr, types[type]);
+
+  encodeElem(type, obj, buf, memory, malloc, 0, ptr);
+
+  return ptr;
+}
